@@ -413,6 +413,12 @@ class WebsiteCloner:
                     local_path = self.url_to_local_path(url)
                     self.safe_mkdir(local_path.parent)
 
+                    # Skip if content is not valid HTML
+                    stripped = html.strip()
+                    if not stripped or not any(stripped.startswith(p) for p in ('<', '<!', '<h', '<H')):
+                        print(f"  ✗ not HTML, skipping {url[:60]}")
+                        continue
+
                     rewritten = await self.rewrite_html(html, url, local_path, client)
                     local_path.write_text(rewritten, encoding="utf-8")
 

@@ -208,6 +208,12 @@ def serve_site(job_id, filepath="index.html"):
     if not target.exists():
         return "Page not found.", 404
 
+    # Serve HTML with explicit charset to prevent binary rendering
+    if str(target).endswith(".html"):
+        content = target.read_text(encoding="utf-8", errors="replace")
+        from flask import Response
+        return Response(content, mimetype="text/html; charset=utf-8")
+
     return send_from_directory(site_dir, filepath)
 
 
