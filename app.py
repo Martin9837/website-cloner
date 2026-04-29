@@ -1,4 +1,4 @@
-"""Flask web interface for the website cloner."""
+"""Flask web interface for the website cloner — SiteCloner Pro."""
 
 import asyncio
 import os
@@ -17,6 +17,16 @@ app = Flask(__name__)
 JOBS: dict[str, dict] = {}
 WORK_DIR = Path("/tmp/cloner_jobs")
 WORK_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def build_zip(job_id: str):
+    out_dir = WORK_DIR / job_id / "site"
+    zip_path = WORK_DIR / job_id / "site.zip"
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for file in out_dir.rglob("*"):
+            if file.is_file():
+                zf.write(file, file.relative_to(out_dir))
+    return zip_path
 
 
 def run_clone_job(job_id: str, url: str, depth: int, pages: int, js: bool):
@@ -39,22 +49,17 @@ def run_clone_job(job_id: str, url: str, depth: int, pages: int, js: bool):
             max_depth=depth,
             max_pages=pages,
             js_render=js,
-            delay=0.3,
+            delay=0.2,
             on_progress=on_progress,
         )
         asyncio.run(cloner.clone())
 
-        # Also build a ZIP for download
-        zip_path = WORK_DIR / job_id / "site.zip"
-        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-            for file in out_dir.rglob("*"):
-                if file.is_file():
-                    zf.write(file, file.relative_to(out_dir))
-
+        zip_path = build_zip(job_id)
         job["status"] = "done"
         job["zip"] = str(zip_path)
         job["pages"] = len(cloner.visited_urls)
         job["assets"] = len(cloner.downloaded_assets)
+        job["original_title"] = cloner.site_title or ""
     except Exception as exc:
         job["status"] = "error"
         job["error"] = str(exc)
@@ -73,7 +78,7 @@ def clone():
         return jsonify(error="Please enter a valid URL starting with http:// or https://"), 400
 
     depth = min(int(data.get("depth", 3)), 6)
-    pages = min(int(data.get("pages", 100)), 500)
+    pages = min(int(data.get("pages", 30)), 500)
     js = bool(data.get("js", True))
 
     job_id = str(uuid.uuid4())
@@ -101,7 +106,37 @@ def status(job_id):
     return jsonify(job)
 
 
-# ── Serve the cloned site as a live preview ───────────────────────────────────
+@app.route("/customize/<job_id>", methods=["POST"])
+def customize(job_id):
+    job = JOBS.get(job_id)
+    if not job or job.get("status") != "done":
+        return jsonify(error="Job not found or not complete"), 404
+
+    data = request.json or {}
+    replacements: dict = data.get("replacements", {})
+
+    out_dir = WORK_DIR / job_id / "site"
+    changed = 0
+
+    for html_file in out_dir.rglob("*.html"):
+        try:
+            content = html_file.read_text(encoding="utf-8", errors="ignore")
+            new_content = content
+            for old, new in replacements.items():
+                if old and new and old.strip() and old != new:
+                    new_content = new_content.replace(old, new)
+            if new_content != content:
+                html_file.write_text(new_content, encoding="utf-8")
+                changed += 1
+        except Exception:
+            pass
+
+    # Rebuild ZIP with customized files
+    build_zip(job_id)
+    return jsonify(success=True, files_changed=changed)
+
+
+# ── Serve the cloned site ─────────────────────────────────────────────────────
 
 @app.route("/sites/<job_id>/")
 @app.route("/sites/<job_id>/<path:filepath>")
@@ -113,13 +148,12 @@ def serve_site(job_id, filepath="index.html"):
     site_dir = WORK_DIR / job_id / "site"
     target = site_dir / filepath
 
-    # If path is a directory, serve its index.html
     if target.is_dir():
         target = target / "index.html"
         filepath = str(Path(filepath) / "index.html")
 
     if not target.exists():
-        return "File not found.", 404
+        return "Page not found.", 404
 
     return send_from_directory(site_dir, filepath)
 

@@ -50,6 +50,7 @@ class WebsiteCloner:
         self.visited_urls: set[str] = set()
         self.downloaded_assets: dict[str, Path] = {}
         self.queue: deque = deque()
+        self.site_title: str = ""
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -400,6 +401,12 @@ class WebsiteCloner:
 
                     rewritten = await self.rewrite_html(html, url, local_path, client)
                     local_path.write_text(rewritten, encoding="utf-8")
+
+                    # Capture site title from first page
+                    if not self.site_title:
+                        soup_title = BeautifulSoup(html, "html.parser").find("title")
+                        if soup_title and soup_title.string:
+                            self.site_title = soup_title.string.strip()
 
                     if depth < self.max_depth:
                         for link in self.extract_links(html, url):

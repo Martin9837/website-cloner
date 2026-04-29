@@ -3,289 +3,219 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Website Cloner</title>
+  <title>SiteCloner Pro — Clone Any Website Instantly</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0f0f13;
-      color: #e2e2e2;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
+    :root {
+      --bg: #08080f;
+      --card: #111118;
+      --border: #1e1e2e;
+      --purple: #7c6af7;
+      --blue: #4fc3f7;
+      --green: #22c55e;
+      --red: #ef4444;
+      --text: #e2e2f0;
+      --muted: #666680;
     }
 
-    .card {
-      background: #1a1a24;
-      border: 1px solid #2a2a3a;
-      border-radius: 16px;
-      padding: 40px;
-      width: 100%;
-      max-width: 560px;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── NAV ── */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: rgba(8,8,15,.9);
+      backdrop-filter: blur(12px); z-index: 100;
     }
+    .logo { font-size: 20px; font-weight: 800; background: linear-gradient(135deg, var(--purple), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-badge { background: var(--purple); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; margin-left: 8px; -webkit-text-fill-color: #fff; }
 
-    .logo {
-      font-size: 28px;
-      font-weight: 700;
-      background: linear-gradient(135deg, #7c6af7, #4fc3f7);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 6px;
+    /* ── HERO ── */
+    .hero {
+      text-align: center; padding: 80px 24px 60px;
+      background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(124,106,247,.12) 0%, transparent 70%);
     }
-
-    .subtitle {
-      color: #666;
-      font-size: 14px;
-      margin-bottom: 32px;
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(124,106,247,.1); border: 1px solid rgba(124,106,247,.3);
+      border-radius: 20px; padding: 6px 14px; font-size: 13px; color: var(--purple);
+      margin-bottom: 24px;
     }
+    .hero h1 { font-size: clamp(32px, 5vw, 56px); font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+    .hero h1 span { background: linear-gradient(135deg, var(--purple), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { font-size: 18px; color: var(--muted); max-width: 520px; margin: 0 auto 40px; line-height: 1.6; }
 
-    label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      margin-bottom: 6px;
+    /* ── FEATURES ── */
+    .features { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 48px; }
+    .feature-chip { display: flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; color: var(--muted); }
+    .feature-chip span { color: var(--green); }
+
+    /* ── CLONE CARD ── */
+    .clone-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 36px; max-width: 620px; margin: 0 auto;
+      box-shadow: 0 32px 80px rgba(0,0,0,.6);
     }
+    .card-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
 
-    input[type="url"], input[type="number"] {
-      width: 100%;
-      background: #0f0f13;
-      border: 1px solid #2a2a3a;
-      border-radius: 8px;
-      color: #e2e2e2;
-      font-size: 15px;
-      padding: 12px 14px;
-      outline: none;
-      transition: border-color .2s;
+    label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+
+    input[type="url"], input[type="number"], input[type="text"] {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 15px;
+      padding: 12px 14px; outline: none; transition: border-color .2s;
     }
+    input:focus { border-color: var(--purple); }
 
-    input:focus { border-color: #7c6af7; }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .field { margin-bottom: 0; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
 
     .toggle-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 20px;
-      background: #0f0f13;
-      border: 1px solid #2a2a3a;
-      border-radius: 8px;
-      padding: 12px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 16px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px;
     }
-
-    .toggle-label { font-size: 14px; color: #ccc; }
-    .toggle-sub { font-size: 12px; color: #555; margin-top: 2px; }
-
+    .toggle-label { font-size: 14px; color: var(--text); }
+    .toggle-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
     .switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
     .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; inset: 0;
-      background: #2a2a3a;
-      border-radius: 24px;
-      cursor: pointer;
-      transition: .3s;
-    }
-    .slider::before {
-      content: "";
-      position: absolute;
-      width: 18px; height: 18px;
-      left: 3px; top: 3px;
-      background: #fff;
-      border-radius: 50%;
-      transition: .3s;
-    }
-    input:checked + .slider { background: #7c6af7; }
+    .slider { position: absolute; inset: 0; background: var(--border); border-radius: 24px; cursor: pointer; transition: .3s; }
+    .slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .3s; }
+    input:checked + .slider { background: var(--purple); }
     input:checked + .slider::before { transform: translateX(20px); }
 
-    .btn {
-      width: 100%;
-      margin-top: 24px;
-      padding: 14px;
-      border: none;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #7c6af7, #4fc3f7);
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
+    .btn-primary {
+      width: 100%; margin-top: 20px; padding: 14px; border: none; border-radius: 10px;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      color: #fff; font-size: 16px; font-weight: 700; cursor: pointer;
       transition: opacity .2s, transform .1s;
     }
-    .btn:hover { opacity: .9; }
-    .btn:active { transform: scale(.98); }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary:hover { opacity: .9; }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
 
-    /* Status */
-    #status-box {
-      display: none;
-      margin-top: 24px;
-      background: #0f0f13;
-      border: 1px solid #2a2a3a;
-      border-radius: 8px;
-      padding: 20px;
-    }
+    /* ── STATUS BOX ── */
+    #status-box { display: none; margin-top: 24px; }
 
-    .status-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .spinner {
-      width: 18px; height: 18px;
-      border: 2px solid #2a2a3a;
-      border-top-color: #7c6af7;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      flex-shrink: 0;
-    }
+    .status-inner { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .status-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--purple); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .status-text { font-size: 14px; font-weight: 600; }
-    .status-sub { font-size: 13px; color: #666; margin-top: 4px; }
-
-    .progress-bar {
-      height: 4px;
-      background: #2a2a3a;
-      border-radius: 4px;
-      margin-top: 12px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #7c6af7, #4fc3f7);
-      border-radius: 4px;
-      width: 0%;
-      transition: width .5s;
-      animation: indeterminate 1.5s ease-in-out infinite;
-    }
-    @keyframes indeterminate {
-      0%   { transform: translateX(-100%); width: 60%; }
-      100% { transform: translateX(200%);  width: 60%; }
-    }
+    .status-text { font-size: 14px; font-weight: 700; }
+    .status-sub { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .progress-bar { height: 4px; background: var(--border); border-radius: 4px; margin-top: 14px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--blue)); border-radius: 4px; animation: indeterminate 1.5s ease-in-out infinite; }
+    @keyframes indeterminate { 0% { transform: translateX(-100%); width: 60%; } 100% { transform: translateX(200%); width: 60%; } }
     .progress-fill.done { animation: none; width: 100%; }
 
-    .action-btns {
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
-      flex-wrap: wrap;
-    }
+    .stats { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .stat { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; color: var(--muted); }
+    .stat span { color: var(--text); font-weight: 700; }
 
-    .action-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: opacity .2s;
-      cursor: pointer;
-      border: none;
-    }
+    /* ── LINK BOX ── */
+    .link-box { display: flex; align-items: center; gap: 8px; background: rgba(124,106,247,.08); border: 1px solid rgba(124,106,247,.3); border-radius: 10px; padding: 10px 14px; margin-top: 14px; }
+    .link-box input { flex: 1; background: none; border: none; color: var(--purple); font-size: 13px; outline: none; }
+    .copy-btn { background: var(--purple); border: none; color: #fff; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: opacity .2s; }
+    .copy-btn:hover { opacity: .85; }
+
+    .action-btns { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+    .action-btn { display: inline-flex; align-items: center; gap: 6px; padding: 11px 18px; border-radius: 8px; font-size: 14px; font-weight: 700; text-decoration: none; transition: opacity .2s; border: none; cursor: pointer; }
     .action-btn:hover { opacity: .85; }
-    .btn-green { background: #22c55e; color: #fff; }
-    .btn-purple { background: #7c6af7; color: #fff; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-purple { background: var(--purple); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
 
-    .link-box {
-      margin-top: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #0f0f13;
-      border: 1px solid #2a2a3a;
-      border-radius: 8px;
-      padding: 10px 14px;
-    }
-    .link-box input {
-      flex: 1;
-      background: none;
-      border: none;
-      color: #7c6af7;
-      font-size: 13px;
-      outline: none;
-      cursor: text;
-    }
-    .copy-btn {
-      background: #2a2a3a;
-      border: none;
-      color: #aaa;
-      border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: background .2s;
-      white-space: nowrap;
-    }
-    .copy-btn:hover { background: #3a3a4a; color: #fff; }
+    .error-box { margin-top: 12px; padding: 12px; background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); border-radius: 8px; font-size: 13px; color: #f87171; }
 
-    .error-box {
-      margin-top: 12px;
-      padding: 12px;
-      background: rgba(239,68,68,.1);
-      border: 1px solid rgba(239,68,68,.3);
-      border-radius: 6px;
-      font-size: 13px;
-      color: #f87171;
-    }
+    /* ── CUSTOMIZE PANEL ── */
+    #customize-panel { display: none; margin-top: 24px; }
+    .customize-inner { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+    .customize-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .customize-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+    .custom-field { margin-bottom: 14px; }
+    .replace-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; align-items: end; }
+    .replace-row .field-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+    .btn-apply { width: 100%; padding: 13px; border: none; border-radius: 10px; background: linear-gradient(135deg, var(--green), #16a34a); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity .2s; }
+    .btn-apply:hover { opacity: .9; }
+    .btn-apply:disabled { opacity: .4; cursor: not-allowed; }
+    .applied-badge { display: none; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 14px; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); border-radius: 8px; font-size: 13px; color: var(--green); font-weight: 600; }
 
-    .stats {
-      display: flex;
-      gap: 16px;
-      margin-top: 12px;
+    /* ── HOW IT WORKS ── */
+    .section { padding: 80px 24px; max-width: 1000px; margin: 0 auto; }
+    .section-label { font-size: 12px; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 12px; text-align: center; }
+    .section-title { font-size: 32px; font-weight: 800; text-align: center; margin-bottom: 48px; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
+    .step { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px; }
+    .step-num { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--purple), var(--blue)); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; margin-bottom: 16px; }
+    .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    .use-cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .use-case { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+    .use-case-icon { font-size: 28px; margin-bottom: 12px; }
+    .use-case h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .use-case p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── FOOTER ── */
+    footer { text-align: center; padding: 40px 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 600px) {
+      nav { padding: 14px 20px; }
+      .hero { padding: 50px 16px 40px; }
+      .clone-card { padding: 24px 20px; }
+      .row { grid-template-columns: 1fr; }
+      .replace-row { grid-template-columns: 1fr; }
     }
-    .stat {
-      background: #1a1a24;
-      border: 1px solid #2a2a3a;
-      border-radius: 6px;
-      padding: 8px 14px;
-      font-size: 13px;
-      color: #aaa;
-    }
-    .stat span { color: #e2e2e2; font-weight: 600; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="logo">Site Cloner</div>
-    <div class="subtitle">Clone any website into a fully offline copy</div>
 
-    <div>
-      <label for="url">Website URL</label>
-      <input type="url" id="url" placeholder="https://example.com" autocomplete="off" />
-    </div>
+<!-- NAV -->
+<nav>
+  <div style="display:flex;align-items:center">
+    <div class="logo">SiteCloner</div>
+    <span class="nav-badge">PRO</span>
+  </div>
+  <div style="font-size:13px;color:var(--muted)">Clone. Customize. Launch.</div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">✦ Powered by Playwright &amp; AI</div>
+  <h1>Clone Any Website<br><span>In Minutes</span></h1>
+  <p>Get a pixel-perfect copy of any website with all pages, images, and styles — fully customizable with your own branding.</p>
+
+  <div class="features">
+    <div class="feature-chip"><span>✓</span> Full page crawling</div>
+    <div class="feature-chip"><span>✓</span> JS-rendered sites</div>
+    <div class="feature-chip"><span>✓</span> All assets downloaded</div>
+    <div class="feature-chip"><span>✓</span> Live preview link</div>
+    <div class="feature-chip"><span>✓</span> White-label ready</div>
+  </div>
+
+  <!-- CLONE CARD -->
+  <div class="clone-card">
+    <div class="card-title">🔗 Enter Website URL</div>
+
+    <label for="url">Website URL</label>
+    <input type="url" id="url" placeholder="https://example.com" autocomplete="off" />
 
     <div class="row">
-      <div class="field">
+      <div>
         <label for="depth">Crawl Depth</label>
         <input type="number" id="depth" value="3" min="1" max="6" />
       </div>
-      <div class="field">
+      <div>
         <label for="pages">Max Pages</label>
-        <input type="number" id="pages" value="100" min="1" max="500" />
+        <input type="number" id="pages" value="20" min="1" max="500" />
       </div>
     </div>
 
     <div class="toggle-row">
       <div>
         <div class="toggle-label">JavaScript Rendering</div>
-        <div class="toggle-sub">Handles SPAs &amp; dynamic content</div>
+        <div class="toggle-sub">Handles SPAs &amp; dynamic content (Wix, React, etc.)</div>
       </div>
       <label class="switch">
         <input type="checkbox" id="js" checked />
@@ -293,76 +223,206 @@
       </label>
     </div>
 
-    <button class="btn" id="clone-btn" onclick="startClone()">Clone Website</button>
+    <button class="btn-primary" id="clone-btn" onclick="startClone()">
+      ⚡ Clone Website
+    </button>
 
+    <!-- STATUS -->
     <div id="status-box">
-      <div class="status-header">
-        <div class="spinner" id="spinner"></div>
-        <div class="status-text" id="status-text">Starting...</div>
+      <div class="status-inner">
+        <div class="status-header">
+          <div class="spinner" id="spinner"></div>
+          <div class="status-text" id="status-text">Starting...</div>
+        </div>
+        <div class="status-sub" id="status-sub"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
       </div>
-      <div class="status-sub" id="status-sub"></div>
-      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
       <div id="result-area"></div>
     </div>
+
+    <!-- CUSTOMIZE PANEL -->
+    <div id="customize-panel">
+      <div class="customize-inner">
+        <div class="customize-title">✏️ Customize Content</div>
+        <div class="customize-sub">Replace any text in the cloned site with your own branding</div>
+
+        <div class="replace-row">
+          <div>
+            <label>Find (original text)</label>
+            <input type="text" id="old-name" placeholder="e.g. Kashmir AC Service" />
+          </div>
+          <div>
+            <label>Replace with</label>
+            <input type="text" id="new-name" placeholder="e.g. Your Business Name" />
+          </div>
+        </div>
+
+        <div class="replace-row">
+          <div>
+            <label>Find Phone</label>
+            <input type="text" id="old-phone" placeholder="original phone number" />
+          </div>
+          <div>
+            <label>Replace with</label>
+            <input type="text" id="new-phone" placeholder="your phone number" />
+          </div>
+        </div>
+
+        <div class="replace-row">
+          <div>
+            <label>Find Email</label>
+            <input type="text" id="old-email" placeholder="original email" />
+          </div>
+          <div>
+            <label>Replace with</label>
+            <input type="text" id="new-email" placeholder="your email" />
+          </div>
+        </div>
+
+        <div class="replace-row">
+          <div>
+            <label>Find Address</label>
+            <input type="text" id="old-address" placeholder="original address" />
+          </div>
+          <div>
+            <label>Replace with</label>
+            <input type="text" id="new-address" placeholder="your address" />
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <button class="btn-apply" id="apply-btn" onclick="applyCustomization()">
+          ✅ Apply &amp; Update Live Link
+        </button>
+
+        <div class="applied-badge" id="applied-badge">
+          ✓ Customization applied! Your live link is updated.
+        </div>
+      </div>
+    </div>
   </div>
+</div>
 
-  <script>
-    let pollInterval = null;
+<!-- HOW IT WORKS -->
+<div class="section">
+  <div class="section-label">Simple Process</div>
+  <div class="section-title">How It Works</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Enter Any URL</h3>
+      <p>Paste the URL of any website you want to clone. Works with Wix, WordPress, Shopify, React apps, and more.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>We Clone It</h3>
+      <p>Our crawler captures every page, image, CSS, font and JavaScript file — including JS-rendered content.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Customize &amp; Share</h3>
+      <p>Replace the business name, phone, email, and address with your own. Get a shareable live link instantly.</p>
+    </div>
+  </div>
+</div>
 
-    async function startClone() {
-      const url = document.getElementById('url').value.trim();
-      const depth = parseInt(document.getElementById('depth').value);
-      const pages = parseInt(document.getElementById('pages').value);
-      const js = document.getElementById('js').checked;
+<!-- USE CASES -->
+<div class="section" style="padding-top:0">
+  <div class="section-label">Use Cases</div>
+  <div class="section-title">Built For Professionals</div>
+  <div class="use-cases">
+    <div class="use-case">
+      <div class="use-case-icon">🎨</div>
+      <h3>Web Designers</h3>
+      <p>Show clients what their new site will look like using an existing design as a reference.</p>
+    </div>
+    <div class="use-case">
+      <div class="use-case-icon">🏢</div>
+      <h3>Agencies</h3>
+      <p>Quickly spin up white-labeled demos for new business pitches without building from scratch.</p>
+    </div>
+    <div class="use-case">
+      <div class="use-case-icon">📦</div>
+      <h3>Backup &amp; Archive</h3>
+      <p>Create offline copies of any website for archival, compliance, or migration purposes.</p>
+    </div>
+    <div class="use-case">
+      <div class="use-case-icon">🔍</div>
+      <h3>Competitive Research</h3>
+      <p>Study competitor websites in detail — layout, structure, content — without internet dependency.</p>
+    </div>
+  </div>
+</div>
 
-      if (!url.startsWith('http')) {
-        alert('Please enter a valid URL starting with https://');
-        return;
-      }
+<footer>
+  <div style="margin-bottom:8px">Built with SiteCloner Pro</div>
+  <div>Clone responsibly. Respect intellectual property and terms of service.</div>
+</footer>
 
-      const btn = document.getElementById('clone-btn');
-      btn.disabled = true;
-      btn.textContent = 'Cloning...';
+<script>
+  let pollInterval = null;
+  let currentJobId = null;
 
-      document.getElementById('status-box').style.display = 'block';
-      document.getElementById('status-text').textContent = 'Starting clone...';
-      document.getElementById('status-sub').textContent = url;
-      document.getElementById('result-area').innerHTML = '';
-      document.getElementById('progress-fill').classList.remove('done');
-      document.getElementById('spinner').style.display = 'block';
+  async function startClone() {
+    const url = document.getElementById('url').value.trim();
+    const depth = parseInt(document.getElementById('depth').value);
+    const pages = parseInt(document.getElementById('pages').value);
+    const js = document.getElementById('js').checked;
 
-      try {
-        const res = await fetch('/clone', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, depth, pages, js }),
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-        pollStatus(data.job_id);
-      } catch (e) {
-        showError(e.message);
-        btn.disabled = false;
-        btn.textContent = 'Clone Website';
-      }
+    if (!url.startsWith('http')) {
+      alert('Please enter a valid URL starting with https://');
+      return;
     }
 
-    function pollStatus(jobId) {
-      pollInterval = setInterval(async () => {
+    const btn = document.getElementById('clone-btn');
+    btn.disabled = true;
+    btn.textContent = 'Cloning...';
+
+    document.getElementById('customize-panel').style.display = 'none';
+    document.getElementById('applied-badge').style.display = 'none';
+    document.getElementById('status-box').style.display = 'block';
+    document.getElementById('status-text').textContent = 'Starting clone...';
+    document.getElementById('status-sub').textContent = url;
+    document.getElementById('result-area').innerHTML = '';
+    document.getElementById('progress-fill').classList.remove('done');
+    document.getElementById('spinner').style.display = 'block';
+
+    try {
+      const res = await fetch('/clone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, depth, pages, js }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      currentJobId = data.job_id;
+      pollStatus(data.job_id);
+    } catch (e) {
+      showError(e.message);
+      resetBtn();
+    }
+  }
+
+  function pollStatus(jobId) {
+    pollInterval = setInterval(async () => {
+      try {
         const res = await fetch(`/status/${jobId}`);
         const job = await res.json();
 
-        if (job.status === 'running') {
+        if (job.status === 'running' || job.status === 'queued') {
           const done = job.pages_done || 0;
-          const cur = (job.current_url || '').replace(/^https?:\/\//, '').slice(0, 50);
+          const cur = (job.current_url || '').replace(/^https?:\/\//, '').slice(0, 55);
           document.getElementById('status-text').textContent = `Cloning... ${done} pages done`;
-          document.getElementById('status-sub').textContent = cur ? `→ ${cur}` : '';
+          if (cur) document.getElementById('status-sub').textContent = `→ ${cur}`;
+
         } else if (job.status === 'done') {
           clearInterval(pollInterval);
           document.getElementById('spinner').style.display = 'none';
           document.getElementById('progress-fill').classList.add('done');
-          document.getElementById('status-text').textContent = 'Clone complete!';
+          document.getElementById('status-text').textContent = '✓ Clone complete!';
           document.getElementById('status-sub').textContent = '';
+
           const liveUrl = `${location.origin}/sites/${jobId}/`;
           document.getElementById('result-area').innerHTML = `
             <div class="stats">
@@ -378,32 +438,91 @@
               <a class="action-btn btn-green" href="/download/${jobId}">⬇ Download ZIP</a>
             </div>
           `;
-          document.getElementById('clone-btn').disabled = false;
-          document.getElementById('clone-btn').textContent = 'Clone Website';
+
+          // Pre-fill original title if available
+          if (job.original_title) {
+            document.getElementById('old-name').placeholder = job.original_title;
+          }
+
+          document.getElementById('customize-panel').style.display = 'block';
+          resetBtn();
+
         } else if (job.status === 'error') {
           clearInterval(pollInterval);
           showError(job.error || 'Unknown error');
-          document.getElementById('clone-btn').disabled = false;
-          document.getElementById('clone-btn').textContent = 'Clone Website';
+          resetBtn();
         }
-      }, 2000);
+      } catch(e) {}
+    }, 2000);
+  }
+
+  async function applyCustomization() {
+    if (!currentJobId) return;
+
+    const replacements = {};
+    const pairs = [
+      ['old-name', 'new-name'],
+      ['old-phone', 'new-phone'],
+      ['old-email', 'new-email'],
+      ['old-address', 'new-address'],
+    ];
+
+    for (const [oldId, newId] of pairs) {
+      const oldVal = document.getElementById(oldId).value.trim();
+      const newVal = document.getElementById(newId).value.trim();
+      if (oldVal && newVal) replacements[oldVal] = newVal;
     }
 
-    function copyLink() {
-      const input = document.getElementById('live-link');
-      input.select();
-      navigator.clipboard.writeText(input.value).then(() => {
-        const btn = document.querySelector('.copy-btn');
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy Link', 2000);
+    if (Object.keys(replacements).length === 0) {
+      alert('Please fill in at least one Find/Replace pair.');
+      return;
+    }
+
+    const btn = document.getElementById('apply-btn');
+    btn.disabled = true;
+    btn.textContent = 'Applying...';
+
+    try {
+      const res = await fetch(`/customize/${currentJobId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ replacements }),
       });
+      const data = await res.json();
+      if (data.success) {
+        const badge = document.getElementById('applied-badge');
+        badge.style.display = 'flex';
+        btn.textContent = '✅ Applied!';
+        setTimeout(() => { btn.disabled = false; btn.textContent = '✅ Apply & Update Live Link'; }, 2000);
+      }
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = '✅ Apply & Update Live Link';
+      alert('Failed to apply customization.');
     }
+  }
 
-    function showError(msg) {
-      document.getElementById('spinner').style.display = 'none';
-      document.getElementById('status-text').textContent = 'Failed';
-      document.getElementById('result-area').innerHTML = `<div class="error-box">${msg}</div>`;
-    }
-  </script>
+  function copyLink() {
+    const input = document.getElementById('live-link');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy Link', 2000);
+    });
+  }
+
+  function resetBtn() {
+    const btn = document.getElementById('clone-btn');
+    btn.disabled = false;
+    btn.textContent = '⚡ Clone Website';
+  }
+
+  function showError(msg) {
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('status-text').textContent = 'Failed';
+    document.getElementById('result-area').innerHTML = `<div class="error-box">${msg}</div>`;
+  }
+</script>
 </body>
 </html>
