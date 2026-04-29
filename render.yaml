@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: website-cloner
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    envVars:
+      - key: PORT
+        value: 10000

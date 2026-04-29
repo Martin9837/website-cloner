@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Website Cloner</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f0f13;
+      color: #e2e2e2;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #1a1a24;
+      border: 1px solid #2a2a3a;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #7c6af7, #4fc3f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+    }
+
+    input[type="url"], input[type="number"] {
+      width: 100%;
+      background: #0f0f13;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      color: #e2e2e2;
+      font-size: 15px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    input:focus { border-color: #7c6af7; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .field { margin-bottom: 0; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 20px;
+      background: #0f0f13;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .toggle-label { font-size: 14px; color: #ccc; }
+    .toggle-sub { font-size: 12px; color: #555; margin-top: 2px; }
+
+    .switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0;
+      background: #2a2a3a;
+      border-radius: 24px;
+      cursor: pointer;
+      transition: .3s;
+    }
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: .3s;
+    }
+    input:checked + .slider { background: #7c6af7; }
+    input:checked + .slider::before { transform: translateX(20px); }
+
+    .btn {
+      width: 100%;
+      margin-top: 24px;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #7c6af7, #4fc3f7);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:hover { opacity: .9; }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* Status */
+    #status-box {
+      display: none;
+      margin-top: 24px;
+      background: #0f0f13;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .status-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid #2a2a3a;
+      border-top-color: #7c6af7;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status-text { font-size: 14px; font-weight: 600; }
+    .status-sub { font-size: 13px; color: #666; margin-top: 4px; }
+
+    .progress-bar {
+      height: 4px;
+      background: #2a2a3a;
+      border-radius: 4px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #7c6af7, #4fc3f7);
+      border-radius: 4px;
+      width: 0%;
+      transition: width .5s;
+      animation: indeterminate 1.5s ease-in-out infinite;
+    }
+    @keyframes indeterminate {
+      0%   { transform: translateX(-100%); width: 60%; }
+      100% { transform: translateX(200%);  width: 60%; }
+    }
+    .progress-fill.done { animation: none; width: 100%; }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      background: #22c55e;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity .2s;
+    }
+    .download-btn:hover { opacity: .85; }
+
+    .error-box {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3);
+      border-radius: 6px;
+      font-size: 13px;
+      color: #f87171;
+    }
+
+    .stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .stat {
+      background: #1a1a24;
+      border: 1px solid #2a2a3a;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 13px;
+      color: #aaa;
+    }
+    .stat span { color: #e2e2e2; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">Site Cloner</div>
+    <div class="subtitle">Clone any website into a fully offline copy</div>
+
+    <div>
+      <label for="url">Website URL</label>
+      <input type="url" id="url" placeholder="https://example.com" autocomplete="off" />
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="depth">Crawl Depth</label>
+        <input type="number" id="depth" value="3" min="1" max="6" />
+      </div>
+      <div class="field">
+        <label for="pages">Max Pages</label>
+        <input type="number" id="pages" value="100" min="1" max="500" />
+      </div>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">JavaScript Rendering</div>
+        <div class="toggle-sub">Handles SPAs &amp; dynamic content</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="js" checked />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <button class="btn" id="clone-btn" onclick="startClone()">Clone Website</button>
+
+    <div id="status-box">
+      <div class="status-header">
+        <div class="spinner" id="spinner"></div>
+        <div class="status-text" id="status-text">Starting...</div>
+      </div>
+      <div class="status-sub" id="status-sub"></div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div id="result-area"></div>
+    </div>
+  </div>
+
+  <script>
+    let pollInterval = null;
+
+    async function startClone() {
+      const url = document.getElementById('url').value.trim();
+      const depth = parseInt(document.getElementById('depth').value);
+      const pages = parseInt(document.getElementById('pages').value);
+      const js = document.getElementById('js').checked;
+
+      if (!url.startsWith('http')) {
+        alert('Please enter a valid URL starting with https://');
+        return;
+      }
+
+      const btn = document.getElementById('clone-btn');
+      btn.disabled = true;
+      btn.textContent = 'Cloning...';
+
+      document.getElementById('status-box').style.display = 'block';
+      document.getElementById('status-text').textContent = 'Starting clone...';
+      document.getElementById('status-sub').textContent = url;
+      document.getElementById('result-area').innerHTML = '';
+      document.getElementById('progress-fill').classList.remove('done');
+      document.getElementById('spinner').style.display = 'block';
+
+      try {
+        const res = await fetch('/clone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, depth, pages, js }),
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        pollStatus(data.job_id);
+      } catch (e) {
+        showError(e.message);
+        btn.disabled = false;
+        btn.textContent = 'Clone Website';
+      }
+    }
+
+    function pollStatus(jobId) {
+      pollInterval = setInterval(async () => {
+        const res = await fetch(`/status/${jobId}`);
+        const job = await res.json();
+
+        if (job.status === 'running') {
+          document.getElementById('status-text').textContent = 'Cloning in progress...';
+        } else if (job.status === 'done') {
+          clearInterval(pollInterval);
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('progress-fill').classList.add('done');
+          document.getElementById('status-text').textContent = 'Clone complete!';
+          document.getElementById('status-sub').textContent = '';
+          document.getElementById('result-area').innerHTML = `
+            <div class="stats">
+              <div class="stat">Pages <span>${job.pages}</span></div>
+              <div class="stat">Assets <span>${job.assets}</span></div>
+            </div>
+            <a class="download-btn" href="/download/${jobId}">
+              ⬇ Download ZIP
+            </a>
+          `;
+          document.getElementById('clone-btn').disabled = false;
+          document.getElementById('clone-btn').textContent = 'Clone Website';
+        } else if (job.status === 'error') {
+          clearInterval(pollInterval);
+          showError(job.error || 'Unknown error');
+          document.getElementById('clone-btn').disabled = false;
+          document.getElementById('clone-btn').textContent = 'Clone Website';
+        }
+      }, 2000);
+    }
+
+    function showError(msg) {
+      document.getElementById('spinner').style.display = 'none';
+      document.getElementById('status-text').textContent = 'Failed';
+      document.getElementById('result-area').innerHTML = `<div class="error-box">${msg}</div>`;
+    }
+  </script>
+</body>
+</html>
