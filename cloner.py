@@ -298,23 +298,32 @@ class WebsiteCloner:
     async def fetch_js(self, page, url: str, client: httpx.AsyncClient) -> str:
         html = ""
         try:
-            await page.goto(url, wait_until="load", timeout=30000)
-            await asyncio.sleep(1.5)
-            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            await asyncio.sleep(0.5)
-            await page.evaluate("window.scrollTo(0, 0)")
-            html = await page.content()
+            async def _playwright_fetch():
+                await page.goto(url, wait_until="domcontentloaded", timeout=15000)
+                await asyncio.sleep(1.0)
+                try:
+                    await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                    await asyncio.sleep(0.5)
+                    await page.evaluate("window.scrollTo(0, 0)")
+                except Exception:
+                    pass
+                return await page.content()
+
+            html = await asyncio.wait_for(_playwright_fetch(), timeout=20)
         except Exception as exc:
             print(f"  ✗ playwright: {exc}")
 
-        # Fallback to plain httpx if Playwright returned nothing
-        if not html or len(html) < 200:
-            print(f"  ↩ falling back to httpx for {url}")
+        # Always fallback to httpx if Playwright returned nothing useful
+        if not html or len(html) < 500:
+            print(f"  ↩ httpx fallback: {url}")
             try:
-                resp = await client.get(url, timeout=30)
+                resp = await asyncio.wait_for(
+                    client.get(url, follow_redirects=True),
+                    timeout=15,
+                )
                 html = resp.text
             except Exception as exc:
-                print(f"  ✗ httpx fallback: {exc}")
+                print(f"  ✗ httpx: {exc}")
 
         return html
 
@@ -368,12 +377,16 @@ class WebsiteCloner:
 
                     try:
                         if self.js_render and page:
-                            html = await self.fetch_js(page, url, client)
+                            html = await asyncio.wait_for(
+                                self.fetch_js(page, url, client), timeout=25
+                            )
                         else:
-                            resp = await client.get(url, timeout=30)
+                            resp = await asyncio.wait_for(
+                                client.get(url, follow_redirects=True), timeout=15
+                            )
                             html = resp.text
                     except Exception as exc:
-                        print(f"  ✗ fetch error: {exc}")
+                        print(f"  ✗ fetch error ({url[:60]}): {exc}")
                         html = ""
 
                     if not html:
