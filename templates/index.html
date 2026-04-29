@@ -179,21 +179,61 @@
     }
     .progress-fill.done { animation: none; width: 100%; }
 
-    .download-btn {
+    .action-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      margin-top: 16px;
       padding: 12px 20px;
       border-radius: 8px;
-      background: #22c55e;
-      color: #fff;
       font-size: 14px;
       font-weight: 600;
       text-decoration: none;
       transition: opacity .2s;
+      cursor: pointer;
+      border: none;
     }
-    .download-btn:hover { opacity: .85; }
+    .action-btn:hover { opacity: .85; }
+    .btn-green { background: #22c55e; color: #fff; }
+    .btn-purple { background: #7c6af7; color: #fff; }
+
+    .link-box {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #0f0f13;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .link-box input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #7c6af7;
+      font-size: 13px;
+      outline: none;
+      cursor: text;
+    }
+    .copy-btn {
+      background: #2a2a3a;
+      border: none;
+      color: #aaa;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background .2s;
+      white-space: nowrap;
+    }
+    .copy-btn:hover { background: #3a3a4a; color: #fff; }
 
     .error-box {
       margin-top: 12px;
@@ -320,14 +360,20 @@
           document.getElementById('progress-fill').classList.add('done');
           document.getElementById('status-text').textContent = 'Clone complete!';
           document.getElementById('status-sub').textContent = '';
+          const liveUrl = `${location.origin}/sites/${jobId}/`;
           document.getElementById('result-area').innerHTML = `
             <div class="stats">
               <div class="stat">Pages <span>${job.pages}</span></div>
               <div class="stat">Assets <span>${job.assets}</span></div>
             </div>
-            <a class="download-btn" href="/download/${jobId}">
-              ⬇ Download ZIP
-            </a>
+            <div class="link-box">
+              <input type="text" id="live-link" value="${liveUrl}" readonly />
+              <button class="copy-btn" onclick="copyLink()">Copy Link</button>
+            </div>
+            <div class="action-btns">
+              <a class="action-btn btn-purple" href="${liveUrl}" target="_blank">🌐 Open Preview</a>
+              <a class="action-btn btn-green" href="/download/${jobId}">⬇ Download ZIP</a>
+            </div>
           `;
           document.getElementById('clone-btn').disabled = false;
           document.getElementById('clone-btn').textContent = 'Clone Website';
@@ -338,6 +384,16 @@
           document.getElementById('clone-btn').textContent = 'Clone Website';
         }
       }, 2000);
+    }
+
+    function copyLink() {
+      const input = document.getElementById('live-link');
+      input.select();
+      navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy Link', 2000);
+      });
     }
 
     function showError(msg) {

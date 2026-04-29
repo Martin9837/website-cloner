@@ -2,14 +2,13 @@
 
 import asyncio
 import os
-import shutil
 import threading
 import uuid
 import zipfile
 from datetime import datetime
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request, send_file, send_from_directory
 
 from cloner import WebsiteCloner
 
@@ -23,7 +22,6 @@ WORK_DIR.mkdir(parents=True, exist_ok=True)
 def run_clone_job(job_id: str, url: str, depth: int, pages: int, js: bool):
     job = JOBS[job_id]
     job["status"] = "running"
-    job["log"] = []
 
     out_dir = WORK_DIR / job_id / "site"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -39,7 +37,7 @@ def run_clone_job(job_id: str, url: str, depth: int, pages: int, js: bool):
         )
         asyncio.run(cloner.clone())
 
-        # Zip the result
+        # Also build a ZIP for download
         zip_path = WORK_DIR / job_id / "site.zip"
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
             for file in out_dir.rglob("*"):
@@ -79,12 +77,11 @@ def clone():
         "created": datetime.utcnow().isoformat(),
     }
 
-    t = threading.Thread(
+    threading.Thread(
         target=run_clone_job,
         args=(job_id, url, depth, pages, js),
         daemon=True,
-    )
-    t.start()
+    ).start()
 
     return jsonify(job_id=job_id)
 
@@ -96,6 +93,31 @@ def status(job_id):
         return jsonify(error="Job not found"), 404
     return jsonify(job)
 
+
+# ── Serve the cloned site as a live preview ───────────────────────────────────
+
+@app.route("/sites/<job_id>/")
+@app.route("/sites/<job_id>/<path:filepath>")
+def serve_site(job_id, filepath="index.html"):
+    job = JOBS.get(job_id)
+    if not job or job.get("status") != "done":
+        return "Site not ready or not found.", 404
+
+    site_dir = WORK_DIR / job_id / "site"
+    target = site_dir / filepath
+
+    # If path is a directory, serve its index.html
+    if target.is_dir():
+        target = target / "index.html"
+        filepath = str(Path(filepath) / "index.html")
+
+    if not target.exists():
+        return "File not found.", 404
+
+    return send_from_directory(site_dir, filepath)
+
+
+# ── ZIP download ──────────────────────────────────────────────────────────────
 
 @app.route("/download/<job_id>")
 def download(job_id):
