@@ -99,6 +99,20 @@ class WebsiteCloner:
         except ValueError:
             return str(to_file)
 
+    def safe_mkdir(self, path: Path):
+        """Create directory, resolving file/dir conflicts along the path."""
+        parts = list(path.parts)
+        current = Path(parts[0])
+        for part in parts[1:]:
+            current = current / part
+            if current.exists() and current.is_file():
+                # A file is blocking directory creation — move it to index.html inside a new dir
+                tmp = current.with_suffix(".tmp_swap")
+                current.rename(tmp)
+                current.mkdir(parents=True, exist_ok=True)
+                tmp.rename(current / "index.html")
+        path.mkdir(parents=True, exist_ok=True)
+
     # ── Asset downloading ────────────────────────────────────────────────────
 
     async def download_asset(self, url: str, client: httpx.AsyncClient) -> Optional[Path]:
@@ -115,14 +129,14 @@ class WebsiteCloner:
 
         local = self.asset_local_path(abs_url)
 
-        if local.exists():
+        if local.exists() and local.is_file():
             self.downloaded_assets[abs_url] = local
             return local
 
         try:
             resp = await client.get(abs_url, follow_redirects=True, timeout=20)
             if resp.status_code == 200:
-                local.parent.mkdir(parents=True, exist_ok=True)
+                self.safe_mkdir(local.parent)
                 local.write_bytes(resp.content)
                 self.downloaded_assets[abs_url] = local
                 print(f"    ↓ {abs_url[:90]}")
@@ -339,7 +353,7 @@ class WebsiteCloner:
                         continue
 
                     local_path = self.url_to_local_path(url)
-                    local_path.parent.mkdir(parents=True, exist_ok=True)
+                    self.safe_mkdir(local_path.parent)
 
                     rewritten = await self.rewrite_html(html, url, local_path, client)
                     local_path.write_text(rewritten, encoding="utf-8")
@@ -349,6 +363,7 @@ class WebsiteCloner:
                             if link not in self.visited_urls:
                                 self.visited_urls.add(link)
                                 self.queue.append((link, depth + 1))
+
 
                     await asyncio.sleep(self.delay)
 
