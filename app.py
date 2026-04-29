@@ -54,6 +54,12 @@ def run_clone_job(job_id: str, url: str, depth: int, pages: int, js: bool):
         )
         asyncio.run(cloner.clone())
 
+        saved_files = list(out_dir.rglob("*.html"))
+        if not saved_files:
+            job["status"] = "error"
+            job["error"] = "No pages could be saved — the site may be blocking crawlers. Try disabling JavaScript Rendering and retry."
+            return
+
         zip_path = build_zip(job_id)
         job["status"] = "done"
         job["zip"] = str(zip_path)
@@ -104,6 +110,53 @@ def status(job_id):
     if not job:
         return jsonify(error="Job not found"), 404
     return jsonify(job)
+
+
+@app.route("/detect/<job_id>")
+def detect(job_id):
+    """Auto-detect business name, phone, email, address from cloned HTML."""
+    import re
+    job = JOBS.get(job_id)
+    if not job or job.get("status") != "done":
+        return jsonify(error="Not ready"), 404
+
+    out_dir = WORK_DIR / job_id / "site"
+    index_file = out_dir / "index.html"
+    if not index_file.exists():
+        # Try any HTML file
+        html_files = list(out_dir.rglob("*.html"))
+        if not html_files:
+            return jsonify(name="", phone="", email="", address="")
+        index_file = html_files[0]
+
+    try:
+        from bs4 import BeautifulSoup
+        content = index_file.read_text(encoding="utf-8", errors="ignore")
+        soup = BeautifulSoup(content, "html.parser")
+
+        # Business name from title or h1
+        name = ""
+        title_tag = soup.find("title")
+        if title_tag and title_tag.string:
+            name = title_tag.string.strip().split("|")[0].split("-")[0].strip()
+        if not name:
+            h1 = soup.find("h1")
+            if h1:
+                name = h1.get_text(strip=True)
+
+        text = soup.get_text(" ", strip=True)
+
+        # Phone
+        phone_match = re.search(r'(\+?\d[\d\s\-().]{8,}\d)', text)
+        phone = phone_match.group(1).strip() if phone_match else ""
+
+        # Email
+        email_match = re.search(r'[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}', text)
+        email = email_match.group(0) if email_match else ""
+
+        return jsonify(name=name, phone=phone, email=email)
+    except Exception as exc:
+        return jsonify(name="", phone="", email="", error=str(exc))
 
 
 @app.route("/customize/<job_id>", methods=["POST"])

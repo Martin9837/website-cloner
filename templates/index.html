@@ -439,12 +439,16 @@
             </div>
           `;
 
-          // Pre-fill original title if available
-          if (job.original_title) {
-            document.getElementById('old-name').placeholder = job.original_title;
-          }
-
           document.getElementById('customize-panel').style.display = 'block';
+
+          // Auto-detect original content
+          fetch(`/detect/${jobId}`)
+            .then(r => r.json())
+            .then(d => {
+              if (d.name)  document.getElementById('old-name').value  = d.name;
+              if (d.phone) document.getElementById('old-phone').value = d.phone;
+              if (d.email) document.getElementById('old-email').value = d.email;
+            }).catch(() => {});
           resetBtn();
 
         } else if (job.status === 'error') {
