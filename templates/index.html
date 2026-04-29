@@ -353,7 +353,10 @@
         const job = await res.json();
 
         if (job.status === 'running') {
-          document.getElementById('status-text').textContent = 'Cloning in progress...';
+          const done = job.pages_done || 0;
+          const cur = (job.current_url || '').replace(/^https?:\/\//, '').slice(0, 50);
+          document.getElementById('status-text').textContent = `Cloning... ${done} pages done`;
+          document.getElementById('status-sub').textContent = cur ? `→ ${cur}` : '';
         } else if (job.status === 'done') {
           clearInterval(pollInterval);
           document.getElementById('spinner').style.display = 'none';

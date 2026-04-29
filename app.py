@@ -22,9 +22,15 @@ WORK_DIR.mkdir(parents=True, exist_ok=True)
 def run_clone_job(job_id: str, url: str, depth: int, pages: int, js: bool):
     job = JOBS[job_id]
     job["status"] = "running"
+    job["pages_done"] = 0
+    job["current_url"] = url
 
     out_dir = WORK_DIR / job_id / "site"
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    def on_progress(pages_done: int, current_url: str):
+        job["pages_done"] = pages_done
+        job["current_url"] = current_url
 
     try:
         cloner = WebsiteCloner(
@@ -34,6 +40,7 @@ def run_clone_job(job_id: str, url: str, depth: int, pages: int, js: bool):
             max_pages=pages,
             js_render=js,
             delay=0.3,
+            on_progress=on_progress,
         )
         asyncio.run(cloner.clone())
 

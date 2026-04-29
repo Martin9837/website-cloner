@@ -32,6 +32,8 @@ class WebsiteCloner:
         js_render: bool = True,
         delay: float = 0.5,
         same_domain_only: bool = True,
+        on_progress=None,
+        timeout_seconds: int = 300,
     ):
         self.base_url = base_url.rstrip("/")
         self.parsed_base = urlparse(self.base_url)
@@ -42,6 +44,8 @@ class WebsiteCloner:
         self.js_render = js_render
         self.delay = delay
         self.same_domain_only = same_domain_only
+        self.on_progress = on_progress
+        self.timeout_seconds = timeout_seconds
 
         self.visited_urls: set[str] = set()
         self.downloaded_assets: dict[str, Path] = {}
@@ -317,6 +321,8 @@ class WebsiteCloner:
     # ── Main crawler ─────────────────────────────────────────────────────────
 
     async def clone(self):
+        import time
+        self._start_time = time.time()
         print(f"\n{'─'*60}")
         print(f"  Cloning : {self.base_url}")
         print(f"  Output  : {self.output_dir.resolve()}")
@@ -350,9 +356,15 @@ class WebsiteCloner:
                 self.visited_urls.add(self.base_url)
 
                 while self.queue and len(self.visited_urls) <= self.max_pages:
+                    if time.time() - self._start_time > self.timeout_seconds:
+                        print(f"  ⏱ Timeout reached ({self.timeout_seconds}s) — stopping crawl.")
+                        break
+
                     url, depth = self.queue.popleft()
                     n = len(self.visited_urls)
                     print(f"[{n}/{self.max_pages}] depth={depth}  {url}")
+                    if self.on_progress:
+                        self.on_progress(n, url)
 
                     try:
                         if self.js_render and page:
