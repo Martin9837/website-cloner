@@ -284,13 +284,22 @@ class WebsiteCloner:
 
         return str(soup)
 
+    SKIP_PATTERNS = (
+        "form-builder", "wix-", "_editor", "/admin", "/login", "/signup",
+        "/cart", "/checkout", "cdn.wix", "static.wix", "instagram.com",
+        "facebook.com", "twitter.com", "youtube.com", "linkedin.com",
+    )
+
     def extract_links(self, html: str, page_url: str) -> list[str]:
         soup = BeautifulSoup(html, "html.parser")
         links = []
         for tag in soup.find_all("a", href=True):
             normalized = self.normalize_url(tag["href"], page_url)
-            if normalized and normalized not in self.visited_urls:
-                links.append(normalized)
+            if not normalized or normalized in self.visited_urls:
+                continue
+            if any(p in normalized for p in self.SKIP_PATTERNS):
+                continue
+            links.append(normalized)
         return links
 
     # ── Playwright fetch ─────────────────────────────────────────────────────
@@ -299,27 +308,21 @@ class WebsiteCloner:
         html = ""
         try:
             async def _playwright_fetch():
-                await page.goto(url, wait_until="domcontentloaded", timeout=15000)
-                await asyncio.sleep(1.0)
-                try:
-                    await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                    await asyncio.sleep(0.5)
-                    await page.evaluate("window.scrollTo(0, 0)")
-                except Exception:
-                    pass
+                await page.goto(url, wait_until="domcontentloaded", timeout=8000)
+                await asyncio.sleep(0.5)
                 return await page.content()
 
-            html = await asyncio.wait_for(_playwright_fetch(), timeout=20)
+            html = await asyncio.wait_for(_playwright_fetch(), timeout=10)
         except Exception as exc:
             print(f"  ✗ playwright: {exc}")
 
-        # Always fallback to httpx if Playwright returned nothing useful
+        # Fallback to httpx if Playwright returned nothing useful
         if not html or len(html) < 500:
             print(f"  ↩ httpx fallback: {url}")
             try:
                 resp = await asyncio.wait_for(
                     client.get(url, follow_redirects=True),
-                    timeout=15,
+                    timeout=10,
                 )
                 html = resp.text
             except Exception as exc:
@@ -378,15 +381,15 @@ class WebsiteCloner:
                     try:
                         if self.js_render and page:
                             html = await asyncio.wait_for(
-                                self.fetch_js(page, url, client), timeout=25
+                                self.fetch_js(page, url, client), timeout=12
                             )
                         else:
                             resp = await asyncio.wait_for(
-                                client.get(url, follow_redirects=True), timeout=15
+                                client.get(url, follow_redirects=True), timeout=10
                             )
                             html = resp.text
                     except Exception as exc:
-                        print(f"  ✗ fetch error ({url[:60]}): {exc}")
+                        print(f"  ✗ skip ({url[:60]}): {exc}")
                         html = ""
 
                     if not html:
