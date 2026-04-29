@@ -291,20 +291,28 @@ class WebsiteCloner:
 
     # ── Playwright fetch ─────────────────────────────────────────────────────
 
-    async def fetch_js(self, page, url: str) -> str:
+    async def fetch_js(self, page, url: str, client: httpx.AsyncClient) -> str:
+        html = ""
         try:
-            await page.goto(url, wait_until="networkidle", timeout=30000)
-            await asyncio.sleep(1.0)
-            # Trigger lazy-load by scrolling
-            await page.evaluate(
-                "window.scrollTo(0, document.body.scrollHeight)"
-            )
+            await page.goto(url, wait_until="load", timeout=30000)
+            await asyncio.sleep(1.5)
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
             await asyncio.sleep(0.5)
             await page.evaluate("window.scrollTo(0, 0)")
-            return await page.content()
+            html = await page.content()
         except Exception as exc:
             print(f"  ✗ playwright: {exc}")
-            return ""
+
+        # Fallback to plain httpx if Playwright returned nothing
+        if not html or len(html) < 200:
+            print(f"  ↩ falling back to httpx for {url}")
+            try:
+                resp = await client.get(url, timeout=30)
+                html = resp.text
+            except Exception as exc:
+                print(f"  ✗ httpx fallback: {exc}")
+
+        return html
 
     # ── Main crawler ─────────────────────────────────────────────────────────
 
@@ -319,7 +327,10 @@ class WebsiteCloner:
         async with async_playwright() as pw:
             browser = page = None
             if self.js_render:
-                browser = await pw.chromium.launch(headless=True)
+                browser = await pw.chromium.launch(
+                    headless=True,
+                    args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+                )
                 ctx = await browser.new_context(
                     user_agent=(
                         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -343,11 +354,15 @@ class WebsiteCloner:
                     n = len(self.visited_urls)
                     print(f"[{n}/{self.max_pages}] depth={depth}  {url}")
 
-                    html = (
-                        await self.fetch_js(page, url)
-                        if self.js_render and page
-                        else (await client.get(url)).text
-                    )
+                    try:
+                        if self.js_render and page:
+                            html = await self.fetch_js(page, url, client)
+                        else:
+                            resp = await client.get(url, timeout=30)
+                            html = resp.text
+                    except Exception as exc:
+                        print(f"  ✗ fetch error: {exc}")
+                        html = ""
 
                     if not html:
                         continue
