@@ -344,7 +344,7 @@ class WebsiteCloner:
         print(f"{'─'*60}\n")
 
         async with async_playwright() as pw:
-            browser = page = None
+            browser = ctx = None
             if self.js_render:
                 browser = await pw.chromium.launch(
                     headless=True,
@@ -357,7 +357,6 @@ class WebsiteCloner:
                         "Chrome/124.0 Safari/537.36"
                     )
                 )
-                page = await ctx.new_page()
 
             async with httpx.AsyncClient(
                 headers={"User-Agent": "Mozilla/5.0 (compatible; SiteCloner/1.0)"},
@@ -380,10 +379,15 @@ class WebsiteCloner:
                         self.on_progress(n, url)
 
                     try:
-                        if self.js_render and page:
-                            html = await asyncio.wait_for(
-                                self.fetch_js(page, url, client), timeout=12
-                            )
+                        if self.js_render and ctx:
+                            # Fresh page every time — prevents stuck state after timeouts
+                            page = await ctx.new_page()
+                            try:
+                                html = await asyncio.wait_for(
+                                    self.fetch_js(page, url, client), timeout=12
+                                )
+                            finally:
+                                await page.close()
                         else:
                             resp = await asyncio.wait_for(
                                 client.get(url, follow_redirects=True), timeout=10
